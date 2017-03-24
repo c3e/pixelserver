@@ -1,0 +1,1 @@
+g++ main.cpp -lmosquitto -levent -pthread libs/gason.cpp
