@@ -57,27 +57,29 @@ void set_mincount(int fd, int mcount)
         printf("Error tcsetattr: %s\n", strerror(errno));
 }
 
-int serial_fd;
+int serial_fd = -1;
 
-int serial_write(uint32_t * buffer,size_t length){
+int serial_write(char * buffer,size_t length){
     int err;
+    printf("Writing %i Bytes!", length);
     err = write ( serial_fd, buffer, length);
     tcdrain(serial_fd);
     return err == length ? 0 : -1;
 }
 
-int serial_init(char * portname)
+int serial_init(std::string portname)
 {
     //char * portname = "/dev/ttyUSB0";
     int fd;
 
-    fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
+    fd = open(portname.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
-        printf("Error opening %s: %s\n", portname, strerror(errno));
+        printf("Error opening %s: %s\n", portname.c_str(), strerror(errno));
         return -1;
     } else {
         serial_fd = fd;
     }
+    set_interface_attribs(serial_fd, B115200);
     return fd;
 }
 
@@ -87,4 +89,5 @@ int serial_read(char * buffer, size_t length){
     while ( err < length ){
         err = read (serial_fd, buffer, length);
     }
+    return err;
 }
