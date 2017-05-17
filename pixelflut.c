@@ -11,6 +11,8 @@
 //#include <SDL.h>
 #include "utils.cpp"
 
+extern int setPixel(uint32_t num, rgbw color);
+
 #define BUFSIZE 2048
 
 #define XSTR(a) #a

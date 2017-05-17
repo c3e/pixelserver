@@ -2,29 +2,6 @@
 #include "serial_control.cpp"
 #include <list>
 
-int setPixel(uint32_t num, rgbw color){
-  size_t len = ((num+1)*32)+2;
-  size_t size = 8193;
-  char buffer[size];
-
-  memset(buffer, 0, size);
-  buffer[0] = '#';
-  
-  int stripLen = 256;
- 
-  uint8_t row = num / stripLen;
-  uint32_t offset = num % stripLen;
-  //printf ("Row: %i, Offset: %i\n",row,offset);
-
-  for ( int i = 0; i < 32; i++ ){
-    buffer[32*offset+1+i] = ( ( ( color >> (31-i)) & 1 ) << row );
-  }
-  //memset ( buffer+(row*stripLen+offset+1), )
-
-  int err = serial_writeb(buffer, size);
-  printf("Written %i Bytes, with %i used! Highest Byte Access: %i\n", size, len, 32*offset+31+1);
-  return err;
-}
 
 void setPixelB(uint32_t num, rgbw color, char * buffer){
   size_t len = ((num+1)*32)+2;
@@ -40,7 +17,6 @@ void setPixelB(uint32_t num, rgbw color, char * buffer){
     buffer[32*offset+i] |= ( ( ( color >> (31-i)) & 1 ) << row );
   }
 }
-
 
 char * number(int x, int y, int c){
 
@@ -114,15 +90,6 @@ char * set_buffer(int size){
 char * update_panel(uint8_t id, char *buffer ){
 
     return NULL;
-}
-
-//
-// sends panel updates to mqtt channel
-// and CAN Bus
-//
-inline void send_panel ( uint8_t id, uint32_t * store){
-
-  //Dummy
 }
 
 
@@ -263,7 +230,6 @@ char * api( char * p, evhttp_request * req){
   } 
   return ret;
 }
-
 
 
 int http_api(uint16_t port, char * addr){

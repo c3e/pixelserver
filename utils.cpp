@@ -19,6 +19,8 @@ struct pctx {
 	uint16_t y;
 };
 
+//global panel configuration
+
 pctx pnl;
 
 
