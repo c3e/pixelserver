@@ -1,7 +1,27 @@
 #include <time.h>
 
+#define rgbw uint32_t
+
 #ifndef UTILS
 #define UTILS 1
+
+struct panel {
+	uint16_t x;
+	uint16_t y;
+	uint16_t n;
+	uint8_t  o;
+	rgbw led[64];
+};
+
+struct pctx {
+	panel **m;
+	uint16_t x;
+	uint16_t y;
+};
+
+pctx pnl;
+
+
 
 /*
 LOGGING
