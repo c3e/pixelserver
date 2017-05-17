@@ -9,44 +9,16 @@
 #include <evhttp.h>
 
 #include "libs/gason.h"
-#include "serial.cpp"
+#include "serial_control.cpp"
 #include "pixelflut.c"
 #include <mosquitto.h>
 #include "utils.cpp"
 #define rgbw uint32_t
 #include <list>
 
-//#include <time.h>
-
 rgbw drawBuffer[256*8+2];
-
 bool MQTT_STARTED = false;
 
-char dbuf[12800*4];
-
-void * serial_background_loop(void *b){
-
-	while (true){
-		serial_write(dbuf,8193);
-	}
-}
-
-void init_serial_background_loop(){
-	pthread_t t;
-	pthread_create(&t, NULL, serial_background_loop,NULL);
-}
-
-inline int serial_writeb (char *b, size_t length){
-	memcpy(dbuf,b,length);
-	return 0;
-}
-
-
-inline int send_serial_frame(rgbw * buffer, size_t length){
-	buffer[0] = 0x000000FF & '#';
-	buffer[length-1] = 0xFF000000 & '\n';
-	return serial_writeb((char*)buffer, length);
-}
 
 int setPixel(uint32_t num, rgbw color){
 	size_t len = ((num+1)*32)+2;
@@ -444,16 +416,6 @@ void init_mosquitto() {
 		MQTT_STARTED = true;
 		mosquitto_loop_start(mosq);
 	}
-}
-
-void init_serial_w(){
-	//Serial Initialization
-	while (serial_fd == -1){
-		log("");
-		serial_init("/dev/ttyACM0");
-		sleep(10);
-	}
-
 }
 
 void usage(){

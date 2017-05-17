@@ -68,6 +68,7 @@ int serial_write(char * buffer,size_t length){
     return err == length ? 0 : -1;
 }
 
+
 int serial_init(std::string portname)
 {
     //char * portname = "/dev/ttyUSB0";

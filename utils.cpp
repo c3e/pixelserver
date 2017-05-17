@@ -2,6 +2,11 @@
 
 #ifndef UTILS
 #define UTILS 1
+
+/*
+LOGGING
+*/
+
 time_t tstart;
 
 void init_log(){
@@ -11,4 +16,6 @@ void init_log(){
 void log(const char * c){
 	std::cout << "[" << difftime(time(0),tstart) << "]: " << c ;
 }
+
+
 #endif
