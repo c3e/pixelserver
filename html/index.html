@@ -1,0 +1,124 @@
+<html>
+<head>
+<style type="text/css"> 
+td {
+	width: 50px;
+	height: 50px;
+	border: 1px solid deeppink;
+}
+
+.frame {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+}
+
+.pixel {
+	width: 50px;
+	height: 50px;
+	border: 1px solid black;
+	margin: 1px;
+}
+
+.pixel:hover {
+	background-color: black;
+}
+
+.row {
+	display: -webkit-flex;
+   	display: flex;
+    -webkit-flex-direction: column;
+   	flex-direction: column;
+}
+
+#cntrl {
+	height: ;
+}
+</style>
+<script type="text/javascript">
+	
+
+	function updatestuff(item){
+		frame = document.getElementById('Frame');
+		for ( i = 0; i < frame.childNodes.length ; i ++){
+			//console.log(frame.childNodes);
+			for ( j = 0; j < frame.childNodes[i].childNodes.length ; j ++){
+				ilength = frame.childNodes.length;
+				jlength = frame.childNodes[i].childNodes.length;
+				tmp = frame.childNodes[i].childNodes[j];
+				if ( item === tmp && i > 0 && i < ilength-1 && j > 0 && j < jlength -1) {
+					alert("i: " + i + " j: " + j);
+					item.style.backgroundColor = "grey";
+				}
+				if ( item === tmp && (( (i == 0 || i == ilength-1) && ( j != 0 && j != jlength-1) ) || ( (j == 0|| j == jlength-1) && ( i != 0 && i != ilength-1 ) ) ) )
+					//outer limit
+					addcolrow(i,j, ilength-1, jlength-1);
+			}
+		}
+	}
+
+	function addcolrow( x, y, maxx, maxy ){
+		console.log("i:" + y + "j:" + x +"maxI: " + maxy + "maxJ: " + maxx);
+		frame = document.getElementById('Frame');
+		if (y == 0 || y == maxy){
+			console.log("y exp");
+			for ( i = 0; i<=maxx; i++){
+				div = document.createElement('div');
+				div.className="pixel";
+				div.setAttribute("onclick", "updatestuff(this)");
+				if (y == 0){
+					frame.childNodes[i].insertBefore(div,frame.childNodes[i].firstChild);
+				} else {
+					frame.childNodes[i].appendChild(div);
+				}
+			}
+		} else if ( x == 0 || x == maxx ) {
+			console.log("x exp");
+			row = document.createElement('div');
+			row.className = "row";
+
+			if ( x == 0){
+				frame.insertBefore(row,frame.firstChild);
+				for ( i = 0; i <= maxy; i++){
+					pixel = document.createElement('div');
+					pixel.className = "pixel";
+					pixel.setAttribute("onclick", "updatestuff(this)");
+					frame.firstChild.appendChild(pixel);
+				}
+			} else {
+				frame.appendChild(row);
+				for ( i = 0; i <= maxy; i++){
+					pixel = document.createElement('div');
+					pixel.className = "pixel";
+					pixel.setAttribute("onclick", "updatestuff(this)");
+					frame.childNodes[maxx+1].appendChild(pixel);
+				}
+			}
+		}
+		sleep(1);
+	}
+console.log("Access for pocsag.eris.cc");
+console.log("password:password");
+
+function foo ( a ){
+	//
+$.ajax({
+	
+})	
+}
+</script>
+
+<div id='cntrl' align='center'>
+<button type="button" id='blafoo'>Save Config!</button> 
+<script>
+document.getElementById('blafoo').addEventListener('click', a => foo );
+</script>
+
+</div>
+
+</head>
+<body>
+<div class="frame" id="Frame"><div class="row"><div class="pixel" onclick="updatestuff(this)" ></div><div class="pixel" onclick="updatestuff(this)" ></div><div class="pixel" onclick="updatestuff(this)" ></div></div><div class="row"><div class="pixel" onclick="updatestuff(this)" ></div><div class="pixel" onclick="updatestuff(this)" ></div><div class="pixel" onclick="updatestuff(this)" ></div></div><div class="row"><div class="pixel" onclick="updatestuff(this)" ></div><div class="pixel" onclick="updatestuff(this)" ></div><div class="pixel" onclick="updatestuff(this)" ></div></div></div></body>
+
+</html>

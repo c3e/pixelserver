@@ -10,80 +10,42 @@
 
 #include "libs/gason.h"
 #include "serial.cpp"
+#include "pixelflut.c"
 #include <mosquitto.h>
-
+#include "utils.cpp"
 #define rgbw uint32_t
 #include <list>
 
-
-struct tile {
-	uint8_t layout;
-	uint8_t spin;
-	uint32_t mask;
-};
-
-
-class screen {
-	public:
-		screen(uint16_t, uint16_t, rgbw);
-		screen(uint16_t, uint16_t);
-		void set_pixel(uint16_t, uint16_t, rgbw);
-		void configure_tiles(uint16_t, uint16_t);
-		void set_tile_layout(uint8_t);
-	private:
-		rgbw * panel;
-		tile * tiles;
-		uint16_t width;
-		uint16_t height;
-		uint8_t tile_layout;
-
-};
-void screen::set_pixel(uint16_t x, uint16_t y, rgbw color ) {
-	panel[y*width+x] = color;
-}
-
-screen::screen ( uint16_t x, uint16_t y){
-	width = x;
-	height = y;
-	panel = (rgbw *)malloc(sizeof(rgbw)*x*y);
-	configure_tiles(x,y);
-}
-
-screen::screen ( uint16_t x, uint16_t y, rgbw color){
-	width = x;
-	height = y;
-	panel = (rgbw *)malloc(sizeof(rgbw)*x*y);
-	memset(panel,color,sizeof(panel));
-	configure_tiles(x,y);
-}
-
-void screen::configure_tiles(uint16_t x, uint16_t y){
-	tiles = (tile *)malloc(sizeof(tile)*(x%64)*(y%64));
-
-}
-
-void screen::set_tile_layout(uint8_t layout){
-	tile_layout = layout;
-}
+//#include <time.h>
 
 rgbw drawBuffer[256*8+2];
 
 bool MQTT_STARTED = false;
-screen * s;
+
+char dbuf[12800*4];
+
+void * serial_background_loop(void *b){
+
+	while (true){
+		serial_write(dbuf,8193);
+	}
+}
+
+void init_serial_background_loop(){
+	pthread_t t;
+	pthread_create(&t, NULL, serial_background_loop,NULL);
+}
+
+inline int serial_writeb (char *b, size_t length){
+	memcpy(dbuf,b,length);
+	return 0;
+}
+
 
 inline int send_serial_frame(rgbw * buffer, size_t length){
 	buffer[0] = 0x000000FF & '#';
 	buffer[length-1] = 0xFF000000 & '\n';
-	return serial_write((char*)buffer, length);
-}
-
-// Background loop
-// runs after configuration
-void send_serial_background_loop(){
-	//fun stuff
-}
-void init_serial_background_loop(){
-	//start fun stuffv
+	return serial_writeb((char*)buffer, length);
 }
 
 int setPixel(uint32_t num, rgbw color){
@@ -105,7 +67,7 @@ int setPixel(uint32_t num, rgbw color){
 	}
 	//memset ( buffer+(row*stripLen+offset+1), )
 
-	int err = serial_write(buffer, size);
+	int err = serial_writeb(buffer, size);
 	printf("Written %i Bytes, with %i used! Highest Byte Access: %i\n", size, len, 32*offset+31+1);
 	return err;
 }
@@ -132,7 +94,7 @@ char * number(int x, int y, int c){
 	b[1] = c & 0xFF;
 	b[2] = x & 0xFF;
 	b[3] = y & 0xFF;
-	serial_write(b, 4);
+	serial_writeb(b, 4);
 
 	return NULL;
 }
@@ -144,7 +106,7 @@ char * show_markings ( uint16_t n){
 	buffer[0] = '#';
 	setPixelB(n*64,0xFFFFFFFF,buffer);
 	setPixelB((n+1)*64-1, 0xFFFFFFFF, buffer);
-	serial_write(buffer, bsize+1);
+	serial_writeb(buffer, bsize+1);
 	return NULL;
 }
 
@@ -155,14 +117,14 @@ char * bla(uint16_t n ){
 	for ( int i = 0; i<n; i++){
 		setPixelB(i, 0xFF000000, b+1);
 	}
-	serial_write(b,8193);
+	serial_writeb(b,8193);
 	return NULL;
 }
 
 char * nope(){
 	char a;
 	a = '+';
-	serial_write(&a,1);
+	serial_writeb(&a,1);
 	return NULL;
 }
 
@@ -175,7 +137,6 @@ char * nope(){
 
 char * update_pixel(uint8_t n){
 	
-
 	if ( setPixel(n, 0xFF000000) != 0){
 		printf ("Serial: Error\n" );
 	} 
@@ -194,7 +155,7 @@ char * set_buffer(int size){
 	b[0] = 'v';
 	b[1] = size >> 8;
 	b[2] = size && 0xFF;
-	serial_write(p, 3);
+	serial_writeb(p, 3);
 	return NULL;
 }
 
@@ -215,23 +176,6 @@ inline void send_panel ( uint8_t id, uint32_t * store){
 
 	//Dummy
 }
-
-/*
-{
-	[
-		{
-			x: 0,
-			y: 0,
-			n: 0
-		},
-
-		{
-			...
-		},
-	]
-}
-
-*/
 
 struct panel {
 	uint16_t x;
@@ -428,9 +372,9 @@ char * api( char * p, evhttp_request * req){
 void on_connect(struct mosquitto *mosq, void *userdata, int result){
 	if(!result){
 		mosquitto_subscribe(mosq, NULL, "deckenkontrolle", 2);
-		printf("connected to channel deckenkontrolle\n");
+		log("Connected to channel deckenkontrolle!\n");
 	}else{
-		fprintf(stderr, "Connect failed\n");
+		fprintf(stderr, "Connect failed!\n");
 	}
 }
 
@@ -486,9 +430,7 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 		json_parse((char *)userdata);
 }
 
-int main()
-{
-
+void init_mosquitto() {
 		// MQTT initialization
 	struct mosquitto * mosq ;
 	mosquitto_lib_init();
@@ -497,39 +439,54 @@ int main()
 	mosquitto_message_callback_set(mosq, on_message);
 	
 	if( mosquitto_connect(mosq, "mqtt.chaospott.de", 1883, 60) ){
-		printf("Unable to connect to MQTT f00\n");
+		log("Unable to connect to MQTT f00\n");
 	} else {
 		MQTT_STARTED = true;
 		mosquitto_loop_start(mosq);
 	}
+}
 
+void init_serial_w(){
 	//Serial Initialization
 	while (serial_fd == -1){
+		log("");
 		serial_init("/dev/ttyACM0");
 		sleep(10);
 	}
 
-  char const SrvAddress[] = "127.0.0.1";
-  std::uint16_t const SrvPort = 5555;
-  int const SrvThreadCount = 4;
-  try
-  {
-   void (*OnRequest)(evhttp_request *, void *) = [] (evhttp_request *req, void *)
-  {
-    char * ret;
-    auto *OutBuf = evhttp_request_get_output_buffer(req);
-    if (!OutBuf)
-      return;
-    char *path = req->uri;
-    if ( ( ret = api(path, req) ) != NULL ){
-      evbuffer_add(OutBuf, ret, 150);
-      free(ret);
-    } else {
-      evbuffer_add_printf(OutBuf, "OK");
-    }
-    evhttp_send_reply(req, HTTP_OK, "", OutBuf);
-  
-  };
+}
+
+void usage(){
+	printf ("Usage:\n\t-p: http port\n\t-P: pixelflut port\n\t-d: Debug without\n");
+}
+
+int http_api(uint16_t port, char * addr){
+
+	char  * SrvAddress;
+	char def[] = "127.0.0.1";
+	SrvAddress = def;
+	if (addr != NULL)
+		SrvAddress = addr;
+	std::uint16_t const SrvPort = port;
+	int const SrvThreadCount = 4;
+	try
+	{
+		void (*OnRequest)(evhttp_request *, void *) = [] (evhttp_request *req, void *)
+	{
+		char * ret;
+	    auto *OutBuf = evhttp_request_get_output_buffer(req);
+	    if (!OutBuf)
+	      return;
+	    char *path = req->uri;
+	    if ( ( ret = api(path, req) ) != NULL ){
+	      evbuffer_add(OutBuf, ret, 150);
+	      free(ret);
+	    } else {
+	      evbuffer_add_printf(OutBuf, "OK");
+	    }
+	    evhttp_send_reply(req, HTTP_OK, "", OutBuf);
+	  
+	};
 
     std::exception_ptr InitExcept;
     bool volatile IsRun = true;
@@ -544,7 +501,7 @@ int main()
         std::unique_ptr<evhttp, decltype(&evhttp_free)> EvHttp(evhttp_new(EventBase.get()), &evhttp_free);
         if (!EvHttp)
           throw std::runtime_error("Failed to create new evhttp.");
-          evhttp_set_gencb(EvHttp.get(), OnRequest, nullptr);
+          //evhttp_set_encb(EvHttp.get(), OnRequest, nullptr);
         if (Socket == -1)
         {
           auto *BoundSock = evhttp_bind_socket_with_handle(EvHttp.get(), SrvAddress, SrvPort);
@@ -593,4 +550,44 @@ int main()
     std::cerr << "Error: " << e.what() << std::endl;
   }
   return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	uint16_t pixelflut_port = 4444;
+	uint16_t httpapi_port = 5555;
+	char * addr = NULL;
+	int opt;
+	bool serial_switch = true;
+	while ((opt = getopt(argc, argv, "p:P:adh")) != -1) {
+       	switch (opt) {
+       	case 'p':
+           httpapi_port = (uint16_t)atoi(optarg);
+           break;
+       	case 'P':
+           pixelflut_port = (uint16_t)atoi(optarg);
+           break;
+        case 'a':
+        	addr = optarg;
+        	break;
+        case 'd':
+        	serial_switch = false;
+        	break;
+        case 'h':
+       	default: /* '?' */
+           usage();
+           return -1;
+       	}
+   }
+	init_log();
+	init_mosquitto();
+	if (serial_switch)
+		init_serial_w();
+	init_pixelflut(1000,1000,pixelflut_port);
+	http_api(httpapi_port, addr);
+
+
+
+	 
+  stop_pixelflut();
 }

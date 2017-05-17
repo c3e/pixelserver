@@ -5,6 +5,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include "utils.cpp"
 
 int set_interface_attribs(int fd, int speed)
 {
