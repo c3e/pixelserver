@@ -13,7 +13,7 @@ void on_connect(struct mosquitto *mosq, void *userdata, int result){
 		mosquitto_subscribe(mosq, NULL, "deckenkontrolle", 2);
 		log("Connected to channel deckenkontrolle!\n");
 	}else{
-		fprintf(stderr, "Connect failed!\n");
+		log("Connect failed!\n");
 	}
 }
 
@@ -92,4 +92,14 @@ void init_mosquitto() {
 		MQTT_STARTED = true;
 		mosquitto_loop_start(mosq);
 	}
+}
+
+void * init_mosquitto_t(void *){
+	init_mosquitto();		
+}
+
+
+void init_mosquitto_threaded(){
+	pthread_t t;
+	pthread_create(&t, NULL, init_mosquitto_t,NULL);
 }

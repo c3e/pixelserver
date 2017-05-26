@@ -36,6 +36,7 @@ td {
 	height: ;
 }
 </style>
+<script src='jquery.js' ></script>
 <script type="text/javascript">
 	
 
@@ -48,7 +49,8 @@ td {
 				jlength = frame.childNodes[i].childNodes.length;
 				tmp = frame.childNodes[i].childNodes[j];
 				if ( item === tmp && i > 0 && i < ilength-1 && j > 0 && j < jlength -1) {
-					alert("i: " + i + " j: " + j);
+					console.log("i: " + i + " j: " + j);
+					cupdate(i,j);
 					item.style.backgroundColor = "grey";
 				}
 				if ( item === tmp && (( (i == 0 || i == ilength-1) && ( j != 0 && j != jlength-1) ) || ( (j == 0|| j == jlength-1) && ( i != 0 && i != ilength-1 ) ) ) )
@@ -98,19 +100,44 @@ td {
 		}
 		sleep(1);
 	}
+
+config_iterator = -1;
+config_array = []];
+
+function cupdate(x, y){
+	if( config_iterator >= 0){
+		config_iterator.push([x,y]);
+	}
+}
+
 console.log("Access for pocsag.eris.cc");
 console.log("password:password");
 
-function foo ( a ){
-	//
+$("#blafoo").click(() => 	//
 $.ajax({
-	
-})	
-}
+	url: '/api/set/setconfig'
+	data: {},
+	method: "POST",
+	success: data=>console.log(data),
+	error: e=>console.log(e)
+}));
+
+
+$("#foobla").click(() => 	//
+$.ajax({
+	url: '/api/set/config/' + config_iterator++
+	data: ,
+	method: "POST",
+	success: data=>console.log(data),
+	error: e=>console.log(e)
+}));
+
+
 </script>
 
 <div id='cntrl' align='center'>
-<button type="button" id='blafoo'>Save Config!</button> 
+<button type="button" id='blafoo'>Save Config!</button>
+<button type="button" id='foobla'>Show</button>
 <script>
 document.getElementById('blafoo').addEventListener('click', a => foo );
 </script>

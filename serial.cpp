@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include "utils.cpp"
 
+#ifndef SER
+#define SER 1
 int set_interface_attribs(int fd, int speed)
 {
     struct termios tty;
@@ -76,10 +78,12 @@ int serial_init(std::string portname)
 
     fd = open(portname.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
+        log("");
         printf("Error opening %s: %s\n", portname.c_str(), strerror(errno));
         return -1;
     } else {
         serial_fd = fd;
+        logn("Acquired Serial Connection on", portname.c_str());
     }
     set_interface_attribs(serial_fd, B115200);
     return fd;
@@ -93,3 +97,4 @@ int serial_read(char * buffer, size_t length){
     }
     return err;
 }
+#endif 

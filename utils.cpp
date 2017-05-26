@@ -5,6 +5,8 @@
 #ifndef UTILS
 #define UTILS 1
 
+pthread_mutex_t logm;
+
 struct panel {
 	uint16_t x;
 	uint16_t y;
@@ -23,8 +25,6 @@ struct pctx {
 
 pctx pnl;
 
-
-
 /*
 LOGGING
 */
@@ -36,7 +36,14 @@ void init_log(){
 }
 
 void log(const char * c){
+	pthread_mutex_lock(&logm);
 	std::cout << "[" << difftime(time(0),tstart) << "]: " << c ;
+	pthread_mutex_unlock(&logm);
+}
+void logn(const char * c, const char * d){
+	pthread_mutex_lock(&logm);
+	std::cout << "[" << difftime(time(0),tstart) << "]: " << c << d << std::endl;
+	pthread_mutex_unlock(&logm);
 }
 
 

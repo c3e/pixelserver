@@ -10,8 +10,9 @@
 #include <stdlib.h>
 //#include <SDL.h>
 #include "utils.cpp"
+#include "serial_control.cpp"
 
-extern int setPixel(uint32_t num, rgbw color);
+decke *d;
 
 #define BUFSIZE 2048
 
@@ -50,9 +51,10 @@ void set_pixel(uint16_t x, uint16_t y, uint32_t c, uint8_t a)
       uint16_t r = src_r * a + dst_r * na;
       uint16_t g = src_g * a + dst_g * na;
       uint16_t b = src_b * a + dst_b * na;
-      pixels[y * PIXEL_WIDTH + x] = 0xff000000 | ((r & 0xff00) << 8) | (g & 0xff00) | (b >> 8); // ARGB
+      d->setPixel(x,y,0xff000000 | ((r & 0xff00) << 8) | (g & 0xff00) | (b >> 8) ); // ARGB
    }
 }
+
 
 void * handle_client(void *s){
    client_thread_count++;
@@ -137,7 +139,7 @@ void * handle_clients(void * foobar){
    addr_len = sizeof(addr);
    struct timeval tv;
    
-   printf("Starting Server...\n");
+   log("Starting Pixelflut Server...\n");
    
    server_sock = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -149,7 +151,7 @@ void * handle_clients(void * foobar){
    addr.sin_family = AF_INET;
    
    if (server_sock == -1){
-      perror("socket() failed");
+      log("socket() failed");
       return 0;
    }
 
@@ -162,7 +164,7 @@ void * handle_clients(void * foobar){
 
    int retries;
    for (retries = 0; bind(server_sock, (struct sockaddr*)&addr, sizeof(addr)) == -1 && retries < 10; retries++){
-      perror("bind() failed ...retry in 5s");
+      log("bind() failed ...retry in 5s");
       usleep(5000000);
    }
    if (retries == 10)
@@ -172,7 +174,7 @@ void * handle_clients(void * foobar){
       perror("listen() failed");
       return 0;
    }
-   printf("Listening...\n");
+   log("Pixelflut is Listening...\n");
    
    setsockopt(server_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv,sizeof(struct timeval));
    setsockopt(server_sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
@@ -193,11 +195,12 @@ void * handle_clients(void * foobar){
 }
 
 
-int init_pixelflut(uint32_t height, uint32_t width, uint32_t port){
+int init_pixelflut(uint32_t height, uint32_t width, uint32_t port, decke &dd){
    PORT = port;
    PIXEL_HEIGHT = height;
    PIXEL_WIDTH = width;
 
+   d = &dd;
    /*
    SDL_Init(SDL_INIT_VIDEO);
    //SDL_ShowCursor(0);

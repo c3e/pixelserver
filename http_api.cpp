@@ -2,6 +2,7 @@
 #include "serial_control.cpp"
 #include <list>
 
+bool volatile IsRun = true;
 
 void setPixelB(uint32_t num, rgbw color, char * buffer){
   size_t len = ((num+1)*32)+2;
@@ -62,7 +63,7 @@ char * nope(){
 char * update_pixel(uint8_t n){
   
   if ( setPixel(n, 0xFF000000) != 0){
-    printf ("Serial: Error\n" );
+    log ("Serial: Error\n" );
   } 
   
   return NULL;
@@ -158,7 +159,7 @@ char * readconfig( std::string input){
 
 
 char * api( char * p, evhttp_request * req){
-  printf("Yo!");
+  //printf("Yo!");
   char * ret = NULL;
 
   std::string s(p);
@@ -232,39 +233,39 @@ char * api( char * p, evhttp_request * req){
 }
 
 
-int http_api(uint16_t port, char * addr){
+    void (*OnRequest)(evhttp_request *, void *) = [] (evhttp_request *req, void *)
+  {
+    char * ret;
+      auto *OutBuf = evhttp_request_get_output_buffer(req);
+      if (!OutBuf)
+        return;
+      char *path = req->uri;
+      if ( ( ret = api(path, req) ) != NULL ){
+        evbuffer_add(OutBuf, ret, 150);
+        free(ret);
+      } else {
+        evbuffer_add_printf(OutBuf, "OK");
+      }
+      evhttp_send_reply(req, HTTP_OK, "", OutBuf);
+    
+  };
 
-	char  * SrvAddress;
+int http_api(uint16_t port, const char * addr){
+
+	const char  * SrvAddress;
 	char def[] = "127.0.0.1";
 	SrvAddress = def;
 	if (addr != NULL)
 		SrvAddress = addr;
 	std::uint16_t const SrvPort = port;
 	int const SrvThreadCount = 4;
-	try
-	{
-		void (*OnRequest)(evhttp_request *, void *) = [] (evhttp_request *req, void *)
-	{
-		char * ret;
-	    auto *OutBuf = evhttp_request_get_output_buffer(req);
-	    if (!OutBuf)
-	      return;
-	    char *path = req->uri;
-	    if ( ( ret = api(path, req) ) != NULL ){
-	      evbuffer_add(OutBuf, ret, 150);
-	      free(ret);
-	    } else {
-	      evbuffer_add_printf(OutBuf, "OK");
-	    }
-	    evhttp_send_reply(req, HTTP_OK, "", OutBuf);
-	  
-	};
+	//try
+	//{
 
     std::exception_ptr InitExcept;
-    bool volatile IsRun = true;
     evutil_socket_t Socket = -1;
-    auto ThreadFunc = [&] ()
-    {
+    
+    auto ThreadFunc = [&] (){
       try
       {
         std::unique_ptr<event_base, decltype(&event_base_free)> EventBase(event_base_new(), &event_base_free);
@@ -298,10 +299,12 @@ int http_api(uint16_t port, char * addr){
         InitExcept = std::current_exception();
       }
     };
+
     auto ThreadDeleter = [&] (std::thread *t) { IsRun = false; t->join(); delete t; };
     typedef std::unique_ptr<std::thread, decltype(ThreadDeleter)> ThreadPtr;
     typedef std::vector<ThreadPtr> ThreadPool;
     ThreadPool Threads;
+
     for (int i = 0 ; i < SrvThreadCount ; ++i)
     {
       ThreadPtr Thread(new std::thread(ThreadFunc), ThreadDeleter);
@@ -313,13 +316,36 @@ int http_api(uint16_t port, char * addr){
       }
       Threads.push_back(std::move(Thread));
     }
-    std::cout << "Press Enter fot quit." << std::endl;
-    std::cin.get();
-    IsRun = false;
-  }
-  catch (std::exception const &e)
-  {
-    std::cerr << "Error: " << e.what() << std::endl;
-  }
+    //std::cout << "Press Enter to quit." << std::endl;
+    //std::cin.get();
+    //IsRun = false;
+  //}
+  //catch (std::exception const &e)
+  //{
+  //  std::cerr << "Error: " << e.what() << std::endl;
+  //}
+  while (IsRun)
+    sleep (5);
   return 0;
+}
+
+struct tcpy{
+  std::string host;
+  uint16_t port;
+};
+
+void * http_control_thread(void *a){
+  tcpy * n = (tcpy *)a; 
+  http_api(n->port,n->host.c_str());
+}
+
+
+int init_http(std::string host, int port){
+ tcpy * tmp = (tcpy *)malloc(sizeof(tcpy));
+ if ( !host.empty())
+  tmp->host = host;
+ tmp->port = port;
+ //logn("Host: ",tmp->host);
+ pthread_t t;
+ pthread_create(&t, NULL, http_control_thread, tmp);
 }
