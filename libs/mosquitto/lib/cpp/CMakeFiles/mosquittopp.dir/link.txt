@@ -1,1 +1,0 @@
-/usr/bin/c++  -fPIC   -shared -Wl,-soname,libmosquittopp.so.1 -o libmosquittopp.so.1.4.9 CMakeFiles/mosquittopp.dir/mosquittopp.cpp.o  -L/home/a3x/projects/CeilingPixelLamp/server/libs/mosquitto-1.4.9/lib ../libmosquitto.so.1.4.9 -lssl -lcrypto -lpthread -lrt -lcares -Wl,-rpath,/home/a3x/projects/CeilingPixelLamp/server/libs/mosquitto-1.4.9/lib: 

@@ -1,1 +1,0 @@
-/usr/bin/cc     CMakeFiles/mosquitto_sub.dir/sub_client.c.o CMakeFiles/mosquitto_sub.dir/client_shared.c.o  -o mosquitto_sub  -L/home/a3x/projects/CeilingPixelLamp/server/libs/mosquitto-1.4.9/lib -rdynamic ../lib/libmosquitto.so.1.4.9 -lssl -lcrypto -lpthread -lrt -lcares -Wl,-rpath,/home/a3x/projects/CeilingPixelLamp/server/libs/mosquitto-1.4.9/lib: 

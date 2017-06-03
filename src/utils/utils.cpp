@@ -1,7 +1,13 @@
+#include <iostream>
 #include <time.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+//#include <std>
+#include <cstdint>
 
-#define rgbw uint32_t
+#define rgbw u_int32_t
 
 #ifndef UTILS
 #define UTILS 1
@@ -11,17 +17,17 @@ bool serial_switch;
 bool volatile IsRun = true;
 
 struct panel {
-	uint16_t x;
-	uint16_t y;
-	uint16_t n;
-	uint8_t  o;
+	u_int16_t x;
+	u_int16_t y;
+	u_int16_t n;
+	u_int8_t  o;
 	rgbw led[64];
 };
 
 struct pctx {
 	panel **m;
-	uint16_t x;
-	uint16_t y;
+	u_int16_t x;
+	u_int16_t y;
 };
 
 //global panel configuration

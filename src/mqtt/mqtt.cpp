@@ -1,4 +1,6 @@
-#include "<utils>/utils.cpp"
+#include "utils/utils.cpp"
+#include "../../libs/mosquitto/lib/mosquitto.h"
+//#include <mosquitto.h>
 
 bool MQTT_STARTED = false;
 
@@ -11,9 +13,9 @@ bool MQTT_STARTED = false;
 void on_connect(struct mosquitto *mosq, void *userdata, int result){
 	if(!result){
 		mosquitto_subscribe(mosq, NULL, "deckenkontrolle", 2);
-		log("MQTT Connected to channel 'deckenkontrolle'!\n");
+		log("Connected to channel deckenkontrolle!\n");
 	}else{
-		log("MQTT Connect failed!\n");
+		log("Connect failed!\n");
 	}
 }
 

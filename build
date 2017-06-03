@@ -1,1 +1,0 @@
-g++ main.cpp -lmosquitto -levent -pthread libs/gason.cpp -std=c++17 $1 $2
