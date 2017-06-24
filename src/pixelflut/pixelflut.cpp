@@ -171,7 +171,7 @@ void * handle_clients(void * foobar){
    addr_len = sizeof(addr);
    struct timeval tv;
 
-   log("Starting Pixelflut Server...\n");
+   log("PF: Starting Pixelflut Server...\n");
 
    server_sock = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -183,28 +183,28 @@ void * handle_clients(void * foobar){
    addr.sin_family = AF_INET;
 
    if (server_sock == -1){
-      perror("socket() failed");
+      log("PF: socket() failed\n");
       return 0;
    }
    int one = 1;
    if (setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0)
-      printf("setsockopt(SO_REUSEADDR) failed\n");
+      log("PF: setsockopt(SO_REUSEADDR) failed\n");
    if (setsockopt(server_sock, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(int)) < 0)
-      printf("setsockopt(SO_REUSEPORT) failed\n");
+      log("PF: setsockopt(SO_REUSEPORT) failed\n");
 
    int retries;
    for (retries = 0; bind(server_sock, (struct sockaddr*)&addr, sizeof(addr)) == -1 && retries < 10; retries++){
-      perror("bind() failed ...retry in 5s");
+      log("PF: bind() failed ...retry in 5s\n");
       usleep(5000000);
    }
    if (retries == 10)
       return 0;
 
    if (listen(server_sock, 4) == -1){
-      perror("listen() failed");
+      log("PF: listen() failed\n");
       return 0;
    }
-   log("Pixelflut Listening...\n");
+   log("PF: Pixelflut Listening...\n");
 
    setsockopt(server_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv,sizeof(struct timeval));
    setsockopt(server_sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
@@ -216,7 +216,7 @@ void * handle_clients(void * foobar){
          if( pthread_create( &thread_id , NULL ,  handle_client , (void*) &client_sock) < 0)
          {
             close(client_sock);
-            perror("could not create thread");
+            log("PF: could not create thread");
          }
       }
    }
@@ -362,7 +362,7 @@ pthread_t udp_thread_id;
 #endif
 
 pthread_t thread_id;
-int server_start(int port, decke &dd)
+int server_start(uint16_t port, decke &dd)
 {
 
    d = &dd;

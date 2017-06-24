@@ -1,4 +1,3 @@
 a.out
 build/
-libs/mosquitto
-libs/libevent
+libs/*

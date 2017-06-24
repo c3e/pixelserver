@@ -1,12 +1,11 @@
 #include <stdexcept>
 #include <iostream>
 #include <memory>
-#include <chrono>
 #include <string.h>
 #include <thread>
 #include <cstdint>
 #include <vector>
-#include <evhttp.h>
+
 
 //#include "../libs/gason.h"
 //#include "serial_control.cpp"
@@ -27,6 +26,11 @@ void xresize(uint32_t **f, int x){
 
 void yresize(uint32_t **f, int y){
 //complex, see top
+}
+
+bool config (std::string path){
+
+	return false; 
 }
 
 void frame(uint32_t **frame, int xf, int yf){
@@ -65,7 +69,7 @@ void setPanel(uint16_t x, uint16_t y, rgbw c){
 }
 
 void usage(){
-	printf ("Usage:\n\t-p: http port\n\t-P: pixelflut port\n\t-d: Debug without\n\t-S: Serial Port (default /dev/ttyACM0)\n");
+	printf ("Usage:\n\t-c: layout Config File path\n\t-a: Interface for http api (default 127.0.0.1)\n\t-p: http port\n\t-P: pixelflut port\n\t-x: panel x dimension (default 2)\n\t-y: panel y dimension (default 2)\n\t-d: Debug without Serial\n\t-S: Serial Port (default /dev/ttyACM0)\n\t-h: help message\n");
 }
 
 
@@ -73,11 +77,14 @@ int main(int argc, char *argv[])
 {
 	uint16_t pixelflut_port = 4444;
 	uint16_t httpapi_port = 5555;
+	uint16_t ceil_x = 2;
+	uint16_t ceil_y = 2;
+	std::string path;
 	std::string saddr;
 	std::string serial_port;
 	int opt;
 	serial_switch = true;
-	while ((opt = getopt(argc, argv, "p:P:a:dhS:")) != -1) {
+	while ((opt = getopt(argc, argv, "p:P:a:dhS:x:y:c:")) != -1) {
        	switch (opt) {
        	case 'p':
            httpapi_port = (uint16_t)atoi(optarg);
@@ -85,7 +92,17 @@ int main(int argc, char *argv[])
        	case 'P':
            pixelflut_port = (uint16_t)atoi(optarg);
            break;
-        case 'a':
+        case 'y':
+           ceil_y = (uint16_t)atoi(optarg);
+           break;
+        case 'x':
+           ceil_x = (uint16_t)atoi(optarg);
+           break;
+        case 'c':
+        	if ( optarg != NULL)
+        		path = std::string(optarg);
+        	break;
+       	case 'a':
         	if ( optarg != NULL)
         		saddr = std::string(optarg);
         	break;
@@ -103,7 +120,14 @@ int main(int argc, char *argv[])
        	}
    	}
 
-   	decke d(2,2);
+   	decke d(ceil_x,ceil_y);
+   	
+   	if ( config (path) ){
+   		//
+   	}
+   	// default values
+   	// size of ceiling should be determined by reading a saved config file
+   	// or interaactively laying out the ceiling configuration
 	init_log();
 	init_mosquitto_threaded();
 	if (serial_switch)

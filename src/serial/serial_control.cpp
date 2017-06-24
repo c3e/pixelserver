@@ -100,6 +100,7 @@ class pan {
 		uint16_t n;
 		void setPixel(int,int,rgbw);
 		void setPixel(int,rgbw);
+		rgbw getPixel(int,int);
 		void fill (size_t, rgbw);
 };
 
@@ -122,6 +123,18 @@ void pan::setPixel(int x,int y, rgbw r){
 			break;
 	}
 }
+
+rgbw pan::getPixel(int x,int y){
+	switch (o) {
+		case 0:
+			return led[y*8+x];
+		
+		case 1:
+			return led[y*8+(y%2)*(8-x)+((y%2)^1)*(x)];
+	}
+	return 0;
+}
+
 
 pan::pan () {
 	o = 0;
@@ -155,19 +168,41 @@ pan::pan ( uint8_t orientation, rgbw * input){
 
 class decke {
 	public:
+		decke();
 		decke (char *);
 		decke (int, int);
 		void setPixel(uint16_t,uint16_t,rgbw);
 		int draw();
+		rgbw getPixel(int, int);
+		int getx();
+		int gety();
 	private:
 		int x;
 		int y;
 		std::vector<pan> panels;
 };
 
+int decke::getx(){
+	return x;
+}
+
+int decke::gety(){
+	return y;
+}
+
+rgbw decke::getPixel(int cx, int cy ){
+	return panels[cy*x+cx].getPixel(cx%64, cy%64);
+}
+
 void decke::setPixel(uint16_t cx, uint16_t cy, rgbw r){
 	panels[cy*x+cx].setPixel(cx%64,cy%64,r);
 	draw();
+}
+
+decke::decke(){
+	panels = std::vector<pan>(4);
+	x = 2;
+	y = 2;
 }
 
 decke::decke ( int cx , int cy ){

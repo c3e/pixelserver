@@ -4,7 +4,7 @@
 #include <utils/utils.cpp>
 #include <serial/serial_control.cpp>
 #include <list>
-#include "../../libs/json/gason.h"
+#include "../../libs/json/gason.hpp"
 
 void setPixelB(uint32_t num, rgbw color, char * buffer){
   size_t len = ((num+1)*32)+2;
@@ -281,7 +281,7 @@ int http_api(uint16_t port, const char * addr){
       {
         std::unique_ptr<event_base, decltype(&event_base_free)> EventBase(event_base_new(), &event_base_free);
         if (!EventBase)
-          throw std::runtime_error("Failed to create new base_event.");
+          log("HA: Failed to create new base_event.\n");
         
         std::unique_ptr<evhttp, decltype(&evhttp_free)> EvHttp(evhttp_new(EventBase.get()), &evhttp_free);
         if (!EvHttp)
@@ -293,14 +293,14 @@ int http_api(uint16_t port, const char * addr){
         {
           auto *BoundSock = evhttp_bind_socket_with_handle(EvHttp.get(), SrvAddress, SrvPort);
           if (!BoundSock)
-            throw std::runtime_error("Failed to bind server socket.");
+            log("HA: Failed to bind server socket.\n");
           if ((Socket = evhttp_bound_socket_get_fd(BoundSock)) == -1)
-            throw std::runtime_error("Failed to get server socket for next instance.");
+            log("HA: Failed to get server socket for next instance.\n");
         }
         else
         {
           if (evhttp_accept_socket(EvHttp.get(), Socket) == -1)
-            throw std::runtime_error("Failed to bind server socket for new instance.");
+            log("HA:Failed to bind server socket for new instance.\n");
         }
         for ( ; IsRun ; )
         {
