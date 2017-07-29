@@ -100,7 +100,6 @@ target_link_libraries(animations utils rapidjson)
 #
 ## http
 #
-file(GLOB source_libev libs/libevent/build/lib/libevent.a )
 
 file(GLOB source_http
   src/http/*.[hc]pp)

@@ -69,7 +69,7 @@ void setPanel(uint16_t x, uint16_t y, rgbw c){
 }
 
 void usage(){
-	printf ("Usage:\n\t-c: layout Config File path\n\t-a: Interface for http api (default 127.0.0.1)\n\t-p: http port\n\t-P: pixelflut port\n\t-x: panel x dimension (default 2)\n\t-y: panel y dimension (default 2)\n\t-d: Debug without Serial\n\t-S: Serial Port (default /dev/ttyACM0)\n\t-h: help message\n");
+	 std::cout << "Usage:\n\t-c: layout Config File path\n\t-a: Interface for http api (default 127.0.0.1)\n\t-p: http port\n\t-P: pixelflut port\n\t-x: panel x dimension (default 2)\n\t-y: panel y dimension (default 2)\n\t-d: Debug without Serial\n\t-S: Serial Port (default /dev/ttyACM0)\n\t-h: help message\n" ;
 }
 
 

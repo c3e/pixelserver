@@ -2,25 +2,42 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/rapidjson.h>
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/schema.h>
+
 using namespace rapidjson;
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+#include <sstream>
+#include <iomanip>
 
 std::string xyjson(decke, int, int);
+uint64_t rgbwtostr(rgbw);
+rgbw strtorgbw(uint64_t);
+
+
+
 
 class ani_frame {
 
 	public:
 		ani_frame();
-		ani_frame(int, int, char *);
-		std::string to_json();
-	private:
-		decke d;
+		ani_frame(int, int);
+        ani_frame(decke &);
+        std::string to_json();
+	    decke d;
 };
 
-ani_frame::ani_frame(int cx, int cy, char * json){
+ani_frame::ani_frame(int cx, int cy){
 	d = decke(cx,cy);
 	// read defined json frame
+}
+
+ani_frame::ani_frame(decke &de){
+    //empty
+    d = de;
 }
 
 ani_frame::ani_frame(){
@@ -29,7 +46,7 @@ ani_frame::ani_frame(){
 }
 
 std::string ani_frame::to_json(){
-	xyjson(d,d.getx(),d.gety());
+	return xyjson(d,d.getx(),d.gety());
 }
 
 
@@ -40,7 +57,7 @@ class ani_ctx {
 	public:
 		ani_ctx(std::string,int,int,int,int);
 		ani_ctx(std::string);
-		void add_frame(char *);
+		void add_frame(decke &);
 		std::string id;
 		int sizex;
 		int sizey;
@@ -62,16 +79,57 @@ ani_ctx::ani_ctx(std::string name, int x, int y, int cf, int cfps){
 }
 
 ani_ctx::ani_ctx(std::string path){
-	sizex = 0;
-	sizey = 0;
-	frame_count = 0;
-	fps = 0;
-	id = "";
+    using namespace rapidjson;
+    FILE* fp = fopen(path.c_str(), "r"); // Windows use "rb"
+    char readBuffer[65536];
+    FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    Document d;
+    d.ParseStream(is);
+    if ( d.HasMember("ctx") ){
+        for (Value::MemberIterator m = d["ctx"].MemberBegin(); m != d["ctx"].MemberEnd(); ++m){
+            if (m->name.GetString() == "id")
+                id = m->value.GetString();
+            else if ( strncmp(m->name.GetString(),"x",1) == 0)
+                sizex = m->value.GetInt();
+            else if ( strncmp(m->name.GetString(),"y",1) == 0)
+                sizey = m->value.GetInt();
+            else if ( strncmp(m->name.GetString(),"f",1) == 0)
+                frame_count = m->value.GetInt();
+            else if ( strncmp(m->name.GetString(),"fps",3) == 0)
+                fps = m->value.GetInt();
+        }
+    }
+
+    frames = std::vector<ani_frame>(frame_count);
+    int x,y;
+    rgbw r;
+    
+    if (d.HasMember("frames")) {
+        
+        for (Value::MemberIterator m = d["frames"].MemberBegin(); m != d["ctx"].MemberEnd(); ++m){
+            
+            decke ceil = decke ( sizex,sizey);
+
+            for (Value::MemberIterator n = m->value.MemberBegin(); n != m->value.MemberEnd(); ++n){
+
+                x = atoi(n->value["x"].GetString());
+                y = atoi(n->value["y"].GetString());
+                std::stringstream(n->value["y"].GetString()) >> std::hex >> r;
+                ceil.setPixel(x,y,r);
+            }
+
+            add_frame(ceil);
+
+        }    
+    }
+
+
+    fclose(fp);
 
 }
 
-void ani_ctx::add_frame(char * json){
-	frames.push_back(ani_frame(sizex, sizey, json));
+void ani_ctx::add_frame(decke &d){
+	frames.push_back(ani_frame(d));
 }
 
 std::string ani_ctx::to_string(){
@@ -87,7 +145,7 @@ std::string ani_ctx::to_string(){
     writer.Uint(sizex);
     writer.Key("y");
     writer.Uint(sizey);
-    writer.Key("frames");
+    writer.Key("f");
     writer.Uint(frame_count);
     writer.Key("fps");
     writer.Uint(fps);
@@ -96,7 +154,7 @@ std::string ani_ctx::to_string(){
     writer.Key("frames");
     writer.StartArray();
     for ( auto f : frames)
-    	writer.String(f.to_json().c_str());
+    	writer.RawValue(f.to_json().c_str(), f.to_json().length(), kObjectType);
     return s.GetString();
 }
 
@@ -142,6 +200,10 @@ uint64_t rgbwtostr(rgbw rgb){
 	return (uint64_t)*arr;
 }
 
+rgbw strtorgbw (uint64_t foo){
+
+}
+
 std::string xyjson(decke d,int x, int y){
 	
     StringBuffer s;
@@ -150,41 +212,20 @@ std::string xyjson(decke d,int x, int y){
 
     for ( int i = 0; i < x ; i++){
     	for (int j = 0; j < y; j++){
-    		writer.StartObject();
-    		writer.Key("x");
-    		writer.Uint(i);
-    		writer.Key("y");
-    		writer.Uint(j);
-    		writer.Key("RGBW");
-    		writer.Key((char *)rgbwtostr(d.getPixel(i,j)));
-    		writer.EndObject();
-    	}
+            if ( d.getPixel(i,j) != 0){
+        		writer.StartObject();
+        		writer.Key("x");
+        		writer.Uint(i);
+        		writer.Key("y");
+        		writer.Uint(j);
+        		writer.Key("RGBW");
+        		writer.Key((char *)rgbwtostr(d.getPixel(i,j)));
+        		writer.EndObject();
+    	    }
+        }
     }
 
     writer.EndArray();
-/*
-    writer.StartObject();               // Between StartObject()/EndObject(), 
-    writer.Key("hello");                // output a key,
-    writer.String("world");             // follow by a value.
-    writer.Key("t");
-    writer.Bool(true);
-    writer.Key("f");
-    writer.Bool(false);
-    writer.Key("n");
-    writer.Null();
-    writer.Key("i");
-    writer.Uint(123);
-    writer.Key("pi");
-    writer.Double(3.1416);
-    writer.Key("a");
-    writer.StartArray();                // Between StartArray()/EndArray(),
-    for (unsigned i = 0; i < 4; i++)
-        writer.Uint(i);                 // all values are elements of the array.
-    writer.EndArray();
-    writer.EndObject();
-*/
-    // {"hello":"world","t":true,"f":false,"n":null,"i":123,"pi":3.1416,"a":[0,1,2,3]}
-    //std::cout << s.GetString() << "\n";
     return s.GetString();
 
 }
