@@ -6,13 +6,13 @@ Dieses Projekt soll als Backend für die Deckensteuerung in Kombiantion mit dem 
 Arch:
 
    ```
-   pacman -S mosquitto libevent
+   pacman -S mosquitto libevent rapidjson
    ```
 
 Debian/Ubuntu:
 
    ```
-   apt-get install mosquitto libevent2
+   apt-get install mosquitto libevent2 rapidjson 
    ```
 
 ## Installation

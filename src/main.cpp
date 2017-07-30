@@ -1,4 +1,4 @@
-#include <stdexcept>
+c#include <stdexcept>
 #include <iostream>
 #include <memory>
 #include <string.h>
@@ -16,23 +16,13 @@
 #include <mqtt/mqtt.cpp>
 //#include "serial.h"
 
-rgbw merge_pixel( rgbw a, rgbw b){
-
-}
-
-void xresize(uint32_t **f, int x){
-// complex, use imagemagick
-}
-
-void yresize(uint32_t **f, int y){
-//complex, see top
-}
 
 bool config (std::string path){
 
 	return false; 
 }
 
+/*
 void frame(uint32_t **frame, int xf, int yf){
 	panel **p = pnl.m;
 	int x = pnl.x;
@@ -57,7 +47,9 @@ void frame(uint32_t **frame, int xf, int yf){
 		}
 	}
 }
+*/
 
+/*
 void setPanel(uint16_t x, uint16_t y, rgbw c){
 	panel **p = pnl.m;
 	switch (p[x/64][y/64].o){
@@ -67,6 +59,7 @@ void setPanel(uint16_t x, uint16_t y, rgbw c){
 			p[x%64][y%64].led[y%64*8 + ((y%64)%2)*(7-x%64) + (((y%64)%2)^1)*(x%64)] = c;
 	}
 }
+*/
 
 void usage(){
 	 std::cout << "Usage:\n\t-c: layout Config File path\n\t-a: Interface for http api (default 127.0.0.1)\n\t-p: http port\n\t-P: pixelflut port\n\t-x: panel x dimension (default 2)\n\t-y: panel y dimension (default 2)\n\t-d: Debug without Serial\n\t-S: Serial Port (default /dev/ttyACM0)\n\t-h: help message\n" ;
@@ -125,16 +118,18 @@ int main(int argc, char *argv[])
    	if ( config (path) ){
    		//
    	}
+   	
    	// default values
    	// size of ceiling should be determined by reading a saved config file
    	// or interaactively laying out the ceiling configuration
+	
 	init_log();
 	init_mosquitto_threaded();
 	if (serial_switch)
 		init_serial_w(serial_port);
-	
-	//init_pixelflut(1000,1000,pixelflut_port, d);
-	server_start(pixelflut_port,d);
+	//init pixelflut
+	server_start(pixelflut_port,d);  
+	//init http interface
 	init_http(saddr,httpapi_port);
 
 	log("Press Enter to quit.\n");
@@ -143,6 +138,5 @@ int main(int argc, char *argv[])
 	//sleep(1000000);
 
 	 
-  //stop_pixelflut();
-  return 0;
+  	return 0;
 }
