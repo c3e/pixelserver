@@ -1,107 +1,57 @@
+//#include "utils/utils.cpp"
+//#include "../../libs/mosquitto/lib/mosquitto.h"
+#include <mosquitto.h>
+#include <string.h>
+#include <unistd.h>
 #include "utils/utils.cpp"
-#include "../../libs/mosquitto/lib/mosquitto.h"
-//#include <mosquitto.h>
 
-bool MQTT_STARTED = false;
+void message_parse ( char * buffer){
+	//parse length
+	char * c  = buffer;
+	while (*c != '\0')
+		c++;
+	long length = (int)(c-buffer);
+	if (length > 1){
+		if (strncmp(buffer, "ON", 2) == 0)
+			//on signal
+			{}
+			
+	}
+	if (length > 2){
+		if (strncmp(buffer, "OFF", 3) == 0)
+			//off signal
+			{}
+	}
 
-//
-// handler function for mqtt
-// called on MQTT connect event
-// subscribes to channel
-//
+}
 
 void on_connect(struct mosquitto *mosq, void *userdata, int result){
 	if(!result){
-		mosquitto_subscribe(mosq, NULL, "deckenkontrolle", 2);
-		log("Connected to channel deckenkontrolle!\n");
+		mosquitto_subscribe(mosq, NULL, "/foobar/elab/deckenkontrolle", 2);
+		log_("MQ: Connected to channel deckenkontrolle!\n");
 	}else{
-		log("Connect failed!\n");
+		log_("MQ: Connect failed!\n");
 	}
 }
-
-//
-// parse json from mqtt channel
-// calls send_panel
-// Why do we need this?
-//
-
-void json_parse ( char * buffer){
-
-	/*
-	
-	Missing functionality
-
-	char * end = buffer + strlen(buffer);
-	JsonValue value;
-	//JsonValue *n;
-	JsonAllocator allocator;
-
-	uint8_t status = jsonParse(buffer, &end, &value, allocator);	
-	if (status != JSON_OK && value.getTag() != JSON_OBJECT) {
-    	fprintf(stderr, "%s at %zd\n", jsonStrError(status), end - buffer);
-	}
-
-	uint32_t store[16];
-	uint8_t index[16];
-	uint8_t x,y;
-	uint8_t count = 0;
-	for (auto i : value) {
-		if ( *(i -> key) == 'x' )
-			x = i -> value.toNumber();
-    	if ( *(i -> key) == 'y' )
-			y = i -> value.toNumber();
-		if ( *(i -> key) == 'p' ){
-			//n = i -> value.toNode();
-			// only works with modified gason library
-			for ( auto j : i -> value ){
-				try {
-
-					store[atoi(j->key)] = (uint32_t) atoi((char *)&j->value.fval);
-				}
-				catch ( ... ) {}
-				index[count++] = atoi(j->key); 
-			}
-    	}
-	}
-
-	send_panel( y*8+x, store );
-
-	*/
-
-}
-
-// 
-// handler function for mqtt
-//
 
 void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message){
-	
 	if ( message->payloadlen)
-		json_parse((char *)userdata);
+		message_parse((char *)message->payload);
+	else
+		message_parse((char *)message->topic);
 }
 
 void init_mosquitto() {
-		// MQTT initialization
+	// MQTT initialization
 	struct mosquitto * mosq ;
 	mosquitto_lib_init();
 	mosq = mosquitto_new(NULL, true, NULL);
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_message_callback_set(mosq, on_message);
 	
-	if( mosquitto_connect(mosq, "mqtt.chaospott.de", 1883, 60) ){
-		log("Unable to connect to MQTT f00\n");
+	if( mosquitto_connect(mosq, "mqtt.foobar.local", 1883, 60) ){
+		log_("Unable to connect to Server\n");
 	} else {
-		MQTT_STARTED = true;
 		mosquitto_loop_start(mosq);
 	}
-}
-
-void * init_mosquitto_t(void *){
-	init_mosquitto();		
-}
-
-
-void init_mosquitto_threaded(){
-	pthread_t t;
-	pthread_create(&t, NULL, init_mosquitto_t,NULL);
 }

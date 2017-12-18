@@ -24,9 +24,12 @@ Debian/Ubuntu:
    cmake ..
    make
    ```
+## Status
+
+Momentan ist die Konfiguration noch statisch und es läuft out of the box mit einem simplen 3x3 Setup ( Mehr ist der main() zu entnehmen. 
+
 
 ## TODO
 
--	mqtt endpoint api
--	initiale Konfiguration
+-	Konfigurationsdateien
 - 	Dokumentation

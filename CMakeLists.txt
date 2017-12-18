@@ -54,83 +54,38 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/")
 #
 ## json
 #
-file(GLOB source_json libs/json/*.[hc]pp)
-add_library(json STATIC ${source_json})
-target_link_libraries(json)
+#file(GLOB source_json libs/json/.[hc]pp)
+#add_library(json STATIC ${source_json})
+#target_link_libraries(json)
 
 
 #
 ## pixelflut
 #
-file(GLOB source_pixelflut
-  src/pixelflut/*.[hc]pp)
-add_library(pixelflut STATIC ${source_pixelflut})
-target_link_libraries(pixelflut serial utils)
+
+file(GLOB source_mqtt  src/mqtt/*.[hc]pp)
+add_library(mqtt STATIC ${source_mqtt})
+target_link_libraries(mqtt)
 
 
 # Searches package MOSQUITTO 
 # definition is in ./cmake/FindMOSQUITTO.cmake
-# find_package(MOSQUITTO REQUIRED)
-
-#
-## mqtt
-#
-
-file(GLOB source_mqtt
-  src/mqtt/*.[hc]pp)
-add_library(mqtt STATIC ${source_mqtt})
-target_link_libraries(mqtt utils)
-
-if (BUILD_STATIC)
-  file(GLOB source_libcrypto libs/openssl/libcrypto.a)
-  file(GLOB source_libssl libs/openssl/libssl.a)
-	file(GLOB source_libmos libs/mosquitto/build/lib/libmosquitto.a )
-	target_link_libraries(mqtt ${source_libssl} ${source_libcrypto} ${source_libmos})
-endif()
-
-#
-## animations
-#
-
-file(GLOB source_animations
-  src/animations/*.[hc]pp)
-add_library(animations STATIC ${source_animations})
-target_link_libraries(animations utils rapidjson)
-
-#
-## http
-#
-
-file(GLOB source_http
-  src/http/*.[hc]pp)
-add_library(http STATIC ${source_http})
-target_link_libraries(http serial utils json)
-
-if (BUILD_STATIC)
-	file(GLOB source_libev libs/libevent/build/lib/libevent.a )
-	target_link_libraries(http ${source_libev})
-endif()
+find_package(MOSQUITTO REQUIRED)
 
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
-#
-## utils
-#
 file(GLOB source_utils
   src/utils/*.[hc]p*)
 add_library(utils STATIC ${source_utils})
-target_link_libraries(utils Threads::Threads)
+target_link_libraries(utils)
 
 
 #
 ## serial
 #
-file(GLOB source_serial
-  src/serial/*.[hc]pp)
-add_library(serial STATIC ${source_serial})
-target_link_libraries(serial utils)
+#file(GLOB source_serial
+#  src/serial/*.[hc]pp)
+#add_library(serial STATIC ${source_serial})
+#target_link_libraries(serial utils)
 
 
 #
@@ -138,20 +93,20 @@ target_link_libraries(serial utils)
 #
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME}
-  http
-  serial
-  mqtt
-  utils
-  pixelflut
+	#http
+	#serial
+	mqtt
+	utils
+	#pixelflut
 	#event
-	#mosquitto
+	mosquitto
 	#ssl
 	#crypto
-	)
+)
 if (BUILD_STATIC)
   target_link_libraries(${PROJECT_NAME} ${source_libssl} ${source_libcrypto})
 else () 
-	target_link_libraries(${PROJECT_NAME} event mosquitto)
+	target_link_libraries(${PROJECT_NAME}  mosquitto pthread)
 endif()	
 
 
